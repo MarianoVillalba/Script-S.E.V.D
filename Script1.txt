@@ -1,0 +1,176 @@
+-- 1. Tabla carreras
+CREATE TABLE carreras (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    plan_estudio VARCHAR(50),
+    resol_ministerial VARCHAR(50)
+);
+
+-- 2. Tabla materias
+CREATE TABLE materias (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    anio_cursado INT,
+    plan_estudio VARCHAR(50),
+    carrera_id INT REFERENCES carreras(id)
+);
+
+-- 3. Tabla estudiantes
+CREATE TABLE estudiantes (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    fecha_nacimiento DATE,
+    direccion TEXT,
+    telefono VARCHAR(20),
+    correo VARCHAR(100),
+    carrera_id INT REFERENCES carreras(id)
+);
+
+-- 4. Tabla mesas
+CREATE TABLE mesas (
+    id SERIAL PRIMARY KEY,
+    materia_id INT REFERENCES materias(id),
+    fecha_hora TIMESTAMP,
+    inicio_inscripcion DATE,
+    fin_inscripcion DATE
+);
+
+-- 5. Tabla inscripciones
+CREATE TABLE inscripciones (
+    id SERIAL PRIMARY KEY,
+    estudiante_id INT REFERENCES estudiantes(id),
+    materia_id INT REFERENCES materias(id),
+    estado VARCHAR(50),
+    fecha_inscripcion DATE
+);
+
+-- 6. Tabla notas
+CREATE TABLE notas (
+    id SERIAL PRIMARY KEY,
+    valor DECIMAL(3, 1) NOT NULL,
+    inscripcion_id INT REFERENCES inscripciones(id),
+    tipo_nota_id INT REFERENCES tipo_notas(id)
+);
+
+-- 7. Tabla tipo_notas
+CREATE TABLE tipo_notas (
+    id SERIAL PRIMARY KEY,
+    descripcion VARCHAR(50) NOT NULL
+);
+
+
+-- 8. Tabla correlatividades
+CREATE TABLE correlatividades (
+    id SERIAL PRIMARY KEY,
+    materia1_id INT REFERENCES materias(id),
+    materia2_id INT REFERENCES materias(id)
+);
+
+-- 9. Tabla estudiantes_mesas
+
+CREATE TABLE estudiantes_mesas (
+    id SERIAL PRIMARY KEY,
+    estudiante_id INT REFERENCES estudiantes(id),
+    mesa_id INT REFERENCES mesas(id),
+    fecha_preinscripcion DATE,
+    fecha_inscripcion DATE
+);
+
+
+-- Inserts
+-- 1. Tabla carreras
+INSERT INTO carreras (nombre, descripcion, plan_estudio, resol_ministerial) VALUES
+('Analista de Sistemas', 'Carrera orientada a la formación en análisis y desarrollo de sistemas informáticos', 'Plan 2021', 'Resolución 1234/2021'),
+('Bioseguridad', 'Carrera orientada a la formación en prácticas de bioseguridad', 'Plan 2020', 'Resolución 5678/2020'),
+('Administración', 'Carrera orientada a la formación en administración y gestión empresarial', 'Plan 2019', 'Resolución 91011/2019');
+
+-- 2. Tabla materias
+INSERT INTO materias (nombre, anio_cursado, plan_estudio, carrera_id) VALUES
+('Programación I', 1, 'Plan 2021', 1),
+('Microbiología', 2, 'Plan 2020', 2),
+('Contabilidad', 1, 'Plan 2019', 3),
+('Algoritmos', 2, 'Plan 2021', 1);
+
+
+-- 3. Tabla estudiantes
+INSERT INTO estudiantes (nombre, apellido, fecha_nacimiento, direccion, telefono, correo, carrera_id) VALUES
+('Juan', 'Pérez', '2000-05-20', 'Calle Falsa 123', '123456789', 'juan.perez@example.com', 1),
+('María', 'González', '1999-07-15', 'Av. Siempreviva 742', '987654321', 'maria.gonzalez@example.com', 2),
+('Carlos', 'Ramírez', '2001-03-10', 'Boulevard Central 456', '564738291', 'carlos.ramirez@example.com', 3);
+
+-- 4. Tabla mesas
+INSERT INTO mesas (materia_id, fecha_hora, inicio_inscripcion, fin_inscripcion) VALUES
+(1, '2024-08-15 10:00:00', '2024-08-01', '2024-08-10'),
+(2, '2024-08-20 14:00:00', '2024-08-05', '2024-08-15'),
+(3, '2024-09-10 09:00:00', '2024-08-25', '2024-09-05');
+
+-- 5. Tabla inscripciones
+INSERT INTO inscripciones (estudiante_id, materia_id, estado, fecha_inscripcion) VALUES
+(1, 1, 'Inscripto', '2024-07-20'),
+(2, 2, 'Inscripto', '2024-07-25'),
+(3, 3, 'Inscripto', '2024-08-01');
+6. Tabla notas
+
+INSERT INTO notas (valor, inscripcion_id, tipo_nota_id) VALUES
+(8.5, 1, 1),
+(7.0, 2, 2),
+(9.0, 3, 1);
+
+-- 7. Tabla tipo_notas
+INSERT INTO tipo_notas (descripcion) VALUES
+('Parcial'),
+('Final'),
+('Recuperatorio');
+
+-- 8. Tabla correlatividades
+INSERT INTO correlatividades (materia1_id, materia2_id) VALUES
+(1, 4), -- Programación I es correlativa de Algoritmos
+(2, 3); -- Microbiología es correlativa de Contabilidad
+
+
+-- 9. Tabla estudiantes_mesas
+INSERT INTO estudiantes_mesas (estudiante_id, mesa_id, fecha_preinscripcion, fecha_inscripcion) VALUES
+(1, 1, '2024-07-25', '2024-08-01'),
+(2, 2, '2024-07-30', '2024-08-05'),
+(3, 3, '2024-08-10', '2024-08-25');
+
+
+
+-- Consultas
+-- 1. Obtener todos los estudiantes inscriptos en una carrera específica
+SELECT e.nombre, e.apellido, c.nombre AS carrera
+FROM estudiantes e
+JOIN carreras c ON e.carrera_id = c.id
+WHERE c.nombre = 'Analista de Sistemas';
+
+-- 2. Obtener todas las materias de un año específico de una carrera
+SELECT m.nombre, m.anio_cursado, c.nombre AS carrera
+FROM materias m
+JOIN carreras c ON m.carrera_id = c.id
+WHERE m.anio_cursado = 1 AND c.nombre = 'Administración';
+
+-- 3. Consultar las notas de un estudiante en una materia específica
+SELECT e.nombre, e.apellido, m.nombre AS materia, n.valor, tn.descripcion AS tipo_nota
+FROM notas n
+JOIN inscripciones i ON n.inscripcion_id = i.id
+JOIN estudiantes e ON i.estudiante_id = e.id
+JOIN materias m ON i.materia_id = m.id
+JOIN tipo_notas tn ON n.tipo_nota_id = tn.id
+WHERE e.nombre = 'Juan' AND m.nombre = 'Programación I';
+
+-- 4. Verificar las correlatividades de una materia
+SELECT m1.nombre AS materia_principal, m2.nombre AS materia_correlativa
+FROM correlatividades c
+JOIN materias m1 ON c.materia1_id = m1.id
+JOIN materias m2 ON c.materia2_id = m2.id
+WHERE m1.nombre = 'Programación I';
+
+-- 5. Obtener las mesas a las que se ha inscripto un estudiante
+SELECT e.nombre, e.apellido, m.nombre AS materia, mes.fecha_hora
+FROM estudiantes_mesas em
+JOIN estudiantes e ON em.estudiante_id = e.id
+JOIN mesas mes ON em.mesa_id = mes.id
+JOIN materias m ON mes.materia_id = m.id
+WHERE e.nombre = 'María';

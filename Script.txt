@@ -1,0 +1,140 @@
+-- Tabla CARRERAS
+CREATE TABLE carreras (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    plan_estudio VARCHAR(255),
+    resol_ministerial VARCHAR(255)
+);
+
+-- Tabla MATERIAS
+CREATE TABLE materias (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    anio_cursado INTEGER,
+    plan_estudio VARCHAR(255),
+    carrera_id INTEGER REFERENCES carreras(id)
+);
+
+-- Tabla CORRELATIVIDADES
+CREATE TABLE correlatividades (
+    id SERIAL PRIMARY KEY,
+    materia1_id INTEGER REFERENCES materias(id),
+    materia2_id INTEGER REFERENCES materias(id)
+);
+
+-- Tabla ESTUDIANTES
+CREATE TABLE estudiantes (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    apellido VARCHAR(255) NOT NULL,
+    fecha_nacimiento DATE,
+    direccion TEXT,
+    telefono VARCHAR(20),
+    correo VARCHAR(255),
+    carrera_id INTEGER REFERENCES carreras(id)
+);
+
+-- Tabla MESAS
+CREATE TABLE mesas (
+    id SERIAL PRIMARY KEY,
+    materia_id INTEGER REFERENCES materias(id),
+    fecha_hora TIMESTAMP,
+    inicio_inscripcion DATE,
+    fin_inscripcion DATE
+);
+
+-- Tabla ESTUDIANTES_MESAS
+CREATE TABLE estudiantes_mesas (
+    id SERIAL PRIMARY KEY,
+    estudiante_id INTEGER REFERENCES estudiantes(id),
+    mesa_id INTEGER REFERENCES mesas(id),
+    fecha_preinscripcion DATE,
+    fecha_inscripcion DATE
+);
+
+-- Tabla INSCRIPCIONES
+CREATE TABLE inscripciones (
+    id SERIAL PRIMARY KEY,
+    estudiante_id INTEGER REFERENCES estudiantes(id),
+    materia_id INTEGER REFERENCES materias(id),
+    estado VARCHAR(50),
+    fecha_inscripcion DATE
+);
+
+-- Tabla TIPONOTAS
+CREATE TABLE tiponotas (
+    id SERIAL PRIMARY KEY,
+    descripcion VARCHAR(255) NOT NULL
+);
+
+-- Tabla NOTAS
+CREATE TABLE notas (
+    id SERIAL PRIMARY KEY,
+    valor NUMERIC(5, 2) NOT NULL,
+    inscripcion_id INTEGER REFERENCES inscripciones(id),
+    tiponota_id INTEGER REFERENCES tiponotas(id)
+);
+
+
+
+-- INSERTS de ejemplo
+INSERT INTO carreras (nombre, descripcion, plan_estudio, resol_ministerial) VALUES
+('Analista de Sistemas', 'Carrera Tecnico Superior en Analista de Sistemas', 'Plan 2020', 'RM-1234');
+
+INSERT INTO materias (nombre, anio_cursado, plan_estudio, carrera_id) VALUES
+('Programación 1', 1, 'Plan 2020', 1),
+('Matemática 1', 1, 'Plan 2020', 1);
+
+INSERT INTO estudiantes (nombre, apellido, fecha_nacimiento, direccion, telefono, correo, carrera_id) VALUES
+('Juan', 'Pérez', '2000-01-01', 'Calle Falsa 123', '123456789', 'juan.perez@example.com', 1);
+
+INSERT INTO mesas (materia_id, fecha_hora, inicio_inscripcion, fin_inscripcion) VALUES
+(1, '2024-12-01 08:00:00', '2024-11-01', '2024-11-30');
+
+INSERT INTO estudiantes_mesas (estudiante_id, mesa_id, fecha_preinscripcion, fecha_inscripcion) VALUES
+(1, 1, '2024-10-01', '2024-11-15');
+
+INSERT INTO inscripciones (estudiante_id, materia_id, estado, fecha_inscripcion) VALUES
+(1, 1, 'Inscripto', '2024-02-01');
+
+INSERT INTO tiponotas (descripcion) VALUES
+('Examen Final');
+
+INSERT INTO notas (valor, inscripcion_id, tiponota_id) VALUES
+(8.5, 1, 1);
+
+
+SELECT e.nombre, e.apellido, em.fecha_inscripcion
+FROM estudiantes e
+JOIN estudiantes_mesas em ON e.id = em.estudiante_id
+WHERE em.mesa_id = 1;
+
+SELECT * FROM estudiantes WHERE carrera_id = 1;
+
+SELECT * FROM estudiantes WHERE carrera_id = 1;
+
+SELECT n.valor, tn.descripcion AS tipo_nota
+FROM notas n
+JOIN inscripciones i ON n.inscripcion_id = i.id
+JOIN tiponotas tn ON n.tiponota_id = tn.id
+WHERE i.estudiante_id = 1 AND i.materia_id = 1;
+
+SELECT * FROM mesas
+WHERE '2024-11-15' BETWEEN inicio_inscripcion AND fin_inscripcion;
+
+SELECT e.nombre, e.apellido
+FROM inscripciones i
+JOIN estudiantes e ON i.estudiante_id = e.id
+WHERE i.materia_id = 1;
+
+
+SELECT m.nombre AS materia, i.estado, n.valor AS nota, tn.descripcion AS tipo_nota
+FROM inscripciones i
+JOIN materias m ON i.materia_id = m.id
+LEFT JOIN notas n ON i.id = n.inscripcion_id
+LEFT JOIN tiponotas tn ON n.tiponota_id = tn.id
+WHERE i.estudiante_id = 1;
+
+
+
